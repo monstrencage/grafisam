@@ -78,3 +78,8 @@ sig
   val union : item -> item -> state -> state
   val equivalent : item -> item -> state -> bool
 end
+
+(** {3 Useful functions. } *)
+
+(** Flat map of a function to a list. *)
+val bind : ('a -> 'b list) -> 'a list -> 'b list

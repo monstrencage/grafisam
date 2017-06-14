@@ -42,12 +42,43 @@ let dot_of_graph (m,a,i : io_graph) file =
 
 open Machine
    
-let machine_to_graph ((v,e,i,o) : 'a machine)
-                     (labels : 'a -> string) : io_graph =
+let det_to_graph
+      (type a) (type b)
+      (module A : Det with type t=a and type state = b)
+      (m : A.t) : io_graph =
+  let v = A.nodes m in
   let n0 = IMap.max_binding v |> fst in
-  let edges0 = List.map (fun (i,l,j) -> i,Some (labels l),j) e in
-  let p1,n1,edges1 = ISet.fold (fun q0 (p,nb,e) -> (ISet.add nb p,nb+1,(nb,None,q0)::e)) i (ISet.empty,n0+1,edges0) in
-  let p2,_,edges2 = ISet.fold (fun qf (p,nb,e) -> (ISet.add nb p,nb+1,(qf,None,nb)::e)) i (p1,n1+1,edges1) in
-  (v,edges2,p2)
+  let edges0 = List.map (fun (i,l,j) -> i,Some l,j) (A.edges m) in
+  let p1,n1,edges1 =
+    (ISet.singleton (n0+1),n0+2,(n0+1,None,A.initial_state m)::edges0)
+  in
+  let p2,_,edges2 =
+    List.fold_left
+      (fun (p,nb,e) qf ->
+        (ISet.add nb p,nb+1,(qf,None,nb)::e))
+      (p1,n1+1,edges1) (A.final_states m)
+  in (v,edges2,p2)
+
+  
+let ndet_to_graph
+      (type a) (type b)
+      (module A : NDet with type t=a and type state = b)
+      (m : A.t) : io_graph =
+  let v = A.nodes m in
+  let n0 = IMap.max_binding v |> fst in
+  let edges0 = List.map (fun (i,l,j) -> i,Some l,j) (A.edges m) in
+  let p1,n1,edges1 =
+    List.fold_left
+      (fun (p,nb,e) q0 ->
+        (ISet.add nb p,nb+1,(nb,None,q0)::e))
+      (ISet.empty,n0+1,edges0)
+      (A.initial_states m)
+  in
+  let p2,_,edges2 =
+    List.fold_left
+      (fun (p,nb,e) qf ->
+        (ISet.add nb p,nb+1,(qf,None,nb)::e))
+      (p1,n1+1,edges1) (A.final_states m)
+  in (v,edges2,p2)
 
   

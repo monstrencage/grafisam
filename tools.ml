@@ -132,3 +132,5 @@ module SSCaseUF =
     include UnionFind.Make(SSCase)(Descriptor)
     let union a b s = union a b s () |> fst
   end
+
+let bind f l = List.concat (List.map f l)
